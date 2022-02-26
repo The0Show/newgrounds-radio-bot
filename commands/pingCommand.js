@@ -14,7 +14,7 @@ class PingCommand extends Command {
             new SlashCommandBuilder()
                 .setName("ping")
                 .setDescription("Test the latency of the bot."),
-            true
+            false
         );
     }
 
@@ -26,7 +26,7 @@ class PingCommand extends Command {
      */
     async execute(client, interaction, logger) {
         const msg = await interaction.reply({
-            content: "Bing...",
+            content: "Ping...",
             fetchReply: true,
         });
 

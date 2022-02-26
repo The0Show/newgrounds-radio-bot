@@ -22,7 +22,7 @@ class NowPlayingCommand extends Command {
             new SlashCommandBuilder()
                 .setName("nowplaying")
                 .setDescription("Get the currently playing song."),
-            true
+            false
         );
     }
 
@@ -33,6 +33,7 @@ class NowPlayingCommand extends Command {
      * @param {Logger} logger The logger instance.
      */
     async execute(client, interaction, logger) {
+        // Creates a dropdown menu.
         let dropdown = new MessageSelectMenu()
             .addOptions([
                 {
@@ -84,6 +85,7 @@ class NowPlayingCommand extends Command {
 
         let row = new MessageActionRow().setComponents(dropdown);
 
+        // the first message, we fetch it so we can create the collector next
         const m = await interaction.reply({
             content: "Select a station to see what it's playing!",
             components: [row],
@@ -96,12 +98,14 @@ class NowPlayingCommand extends Command {
         });
 
         collector.on("collect", async (i) => {
+            // scold users who try to use the dropdown that isn't the user who created the interaction
             if (i.user.id !== interaction.user.id)
                 return i.reply({
                     content: "This isn't your interaction!",
                     ephemeral: true,
                 });
 
+            // get data from server
             const { server_name, server_description, current_song } =
                 await new NewgroundsRadioStatus(
                     endpoints.status
@@ -121,6 +125,7 @@ class NowPlayingCommand extends Command {
             i.deferUpdate();
         });
 
+        // disable the dropdown to prevent any further updates
         collector.on("end", () => {
             dropdown.setDisabled(true);
 

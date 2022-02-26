@@ -1,8 +1,10 @@
+// Imports
 const { Client, Collection, MessageEmbed } = require("discord.js");
 const Logger = require("./classes/Logger");
 const fs = require("fs-extra");
 require("dotenv").config();
 
+// The bot's client.
 const client = new Client({
     partials: ["CHANNEL", "MESSAGE", "GUILD_MEMBER", "USER"],
     intents: [
@@ -15,8 +17,10 @@ const client = new Client({
     ],
 });
 
+// Initizlizes the logger.
 const logger = new Logger(`Shard ${client.shard.ids[0]}`);
 
+// Create a commands collection, read all .js files in the /commands folder, and register them
 client.commands = new Collection();
 
 const commandFiles = fs
@@ -34,6 +38,7 @@ client.on("ready", () => {
     logger.log(`Logged in as ${client.user.tag} and ready`);
 });
 
+// when an interaction is created
 client.on("interactionCreate", async (interaction) => {
     if (!interaction.isCommand()) return;
 
@@ -57,6 +62,7 @@ client.on("interactionCreate", async (interaction) => {
     }
 });
 
+// if someone tries to use the old prefix, tell them about v2
 client.on("messageCreate", (msg) => {
     if (msg.content.startsWith("ng!") || msg.content.startsWith("ngr!")) {
         msg.reply({

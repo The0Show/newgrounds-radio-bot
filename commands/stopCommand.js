@@ -15,7 +15,7 @@ class StopCommand extends Command {
             new SlashCommandBuilder()
                 .setName("stop")
                 .setDescription("Stops the radio and leaves the channel."),
-            true
+            false
         );
     }
 
@@ -27,10 +27,11 @@ class StopCommand extends Command {
      */
     async execute(client, interaction, logger) {
         const currentBotVoiceConnection =
-            interaction.guild.voiceStates.cache.get("732092570804551711");
+            interaction.guild.voiceStates.cache.get(interaction.guildId);
 
         const vc = getVoiceConnection(interaction.guild.id);
 
+        // make sure that the bot is playing something and the user is in the same channel
         if (
             !currentBotVoiceConnection ||
             currentBotVoiceConnection.channelId === null
@@ -50,6 +51,7 @@ class StopCommand extends Command {
             currentBotVoiceConnection.channelId ===
             interaction.member.voice.channel.id
         ) {
+            // destory the connection and stop the connection
             if (!vc) {
                 currentBotVoiceConnection.disconnect();
             } else {

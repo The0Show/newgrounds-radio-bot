@@ -17,7 +17,7 @@ class AboutCommand extends Command {
                 .setDescription(
                     "See information on the bot and it's creators."
                 ),
-            true
+            false
         );
     }
 

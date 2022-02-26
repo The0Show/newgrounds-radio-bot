@@ -48,7 +48,7 @@ class PlayCommand extends Command {
                             ["Rock", "/rock"],
                         ]);
                 }),
-            true
+            false
         );
     }
 
@@ -60,6 +60,7 @@ class PlayCommand extends Command {
      * @param {string} mount The NGR mount to play. This is usually provided by {@link CommandInteraction.options}.
      */
     async playMount(client, interaction, channel, mount) {
+        // get data from server
         const { server_name, server_description, current_song } =
             await new NewgroundsRadioStatus(endpoints.status).getMountStatus(
                 mount
@@ -88,6 +89,7 @@ class PlayCommand extends Command {
             )
             .setColor("#eeb211");
 
+        // if i don't have permissions i need in the channel
         if (
             !channel.permissionsFor(client.user).has("CONNECT") ||
             !channel.permissionsFor(client.user).has("USE_VAD") ||
@@ -110,6 +112,7 @@ class PlayCommand extends Command {
             return;
         }
 
+        // join the channel, create the audio resource and player
         const connection = joinVoiceChannel({
             channelId: channel.id,
             guildId: channel.guild.id,
@@ -156,12 +159,13 @@ class PlayCommand extends Command {
             });
 
         const currentBotVoiceConnection =
-            interaction.guild.voiceStates.cache.get("732092570804551711");
+            interaction.guild.voiceStates.cache.get(interaction.guildId);
 
         if (
             !currentBotVoiceConnection ||
             currentBotVoiceConnection.channelId === null
         ) {
+            // bot is not in any channel in server
             this.playMount(
                 client,
                 interaction,
@@ -172,6 +176,7 @@ class PlayCommand extends Command {
             currentBotVoiceConnection.channelId !==
             interaction.member.voice.channel.id
         ) {
+            // bot is already in a channel, and user is in different channel
             let msg = {
                 content: `I'm already in <#${
                     currentBotVoiceConnection.channelId
@@ -185,6 +190,7 @@ class PlayCommand extends Command {
 
             let confirmMoveComponent = new MessageActionRow();
 
+            // if the user can move members, give them the option to move the bot to their channel
             if (interaction.member.permissions.has("MOVE_MEMBERS")) {
                 confirmMoveComponent.addComponents(
                     new MessageButton()
@@ -274,6 +280,7 @@ class PlayCommand extends Command {
             currentBotVoiceConnection.channelId ===
             interaction.member.voice.channel.id
         ) {
+            // bot and user are in the same channel
             const connection = getVoiceConnection(interaction.guild.id);
 
             // bot is not playing anything
@@ -296,10 +303,12 @@ class PlayCommand extends Command {
 
             // if both tests failed then we need to vote
 
+            // get data from endpoint
             const mountData = await new NewgroundsRadioStatus(
                 endpoints.status
             ).getMountStatus(mount);
 
+            // format the mount name
             let formattedMountName = mountData.server_name.replace(
                 " Radio",
                 ""
@@ -349,12 +358,14 @@ class PlayCommand extends Command {
                 fetchReply: true,
             });
 
+            // create a collector for voting
             const collector = m.createMessageComponentCollector({
                 componentType: "BUTTON",
                 time: 20000,
             });
 
             collector.on("collect", async (i) => {
+                // if the user hasn't voted yet, add them to the vote count
                 if (i.user.id === interaction.user.id)
                     return i.reply({
                         content: "You can't approve your own request!",
@@ -381,6 +392,7 @@ class PlayCommand extends Command {
                     .setDisabled(false);
                 actionRow = new MessageActionRow().setComponents(button);
 
+                // if the vote passed play the mount
                 if (approvedCount.length >= neededCount) {
                     button.setDisabled(true);
 
@@ -398,6 +410,7 @@ class PlayCommand extends Command {
             });
 
             collector.on("end", (collected) => {
+                // if there isn't enough votes, change the message
                 if (approvedCount.length < neededCount) {
                     button.setDisabled(true);
 
@@ -416,6 +429,7 @@ class PlayCommand extends Command {
                 }
             });
         } else {
+            // something went wrong
             console.assert();
         }
     }

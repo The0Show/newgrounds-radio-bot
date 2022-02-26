@@ -1,9 +1,11 @@
+// Imports
 const { ShardingManager } = require("discord.js");
 const fs = require("fs-extra");
 const { REST } = require("@discordjs/rest");
 const { Routes } = require("discord-api-types/v9");
 require("dotenv").config();
 
+// Read command data and push the data to these arrays depending on the testing value
 const publicCommands = [];
 const privateCommands = [];
 const commandFiles = fs
@@ -21,6 +23,7 @@ for (const file of commandFiles) {
     }
 }
 
+// Initialize the REST API and make PUT requests to register commands.
 const rest = new REST({ version: "9" }).setToken(process.env.DISCORD_TOKEN);
 
 (async () => {
@@ -50,6 +53,7 @@ const rest = new REST({ version: "9" }).setToken(process.env.DISCORD_TOKEN);
         )
         .catch(console.error);
 
+    // Sharding
     const manager = new ShardingManager("./bot.js", {
         token: process.env.DISCORD_TOKEN,
         respawn: true,
