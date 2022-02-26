@@ -159,7 +159,7 @@ class PlayCommand extends Command {
             });
 
         const currentBotVoiceConnection =
-            interaction.guild.voiceStates.cache.get(interaction.guildId);
+            interaction.guild.voiceStates.cache.get(client.user.id);
 
         if (
             !currentBotVoiceConnection ||

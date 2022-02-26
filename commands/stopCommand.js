@@ -27,7 +27,7 @@ class StopCommand extends Command {
      */
     async execute(client, interaction, logger) {
         const currentBotVoiceConnection =
-            interaction.guild.voiceStates.cache.get(interaction.guildId);
+            interaction.guild.voiceStates.cache.get(client.user.id);
 
         const vc = getVoiceConnection(interaction.guild.id);
 
