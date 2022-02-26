@@ -4,6 +4,8 @@ Listen to Newgrounds Radio via Discord.
 
 Powered by Discord.JS, with classes to speed up the process.
 
+Invite: https://the0show.com/projects/discord-bots/newgrounds-radio-bot-h9xQFJH
+
 # Development
 
 To setup for development, you'll need to create a `.env` file. This file should contain the following:
