@@ -12,7 +12,9 @@ To setup for development, you'll need to create a `.env` file. This file should 
 
 ```
 DISCORD_TOKEN=(the token for your bot)
+DISCORD_DEV_TOKEN=(the token for your development bot)
 DISCORD_CLIENT=(the client id for your discord application)
+DISCORD_DEV_CLIENT=(the client id for your development discord application)
 DISCORD_GUILD=(the id for the guild you'd like to test commands on)
 ```
 

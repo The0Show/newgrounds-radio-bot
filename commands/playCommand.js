@@ -1,18 +1,18 @@
 const { SlashCommandBuilder } = require("@discordjs/builders");
 const {
-    joinVoiceChannel,
-    getVoiceConnection,
-    createAudioResource,
-    createAudioPlayer,
-    entersState,
+	joinVoiceChannel,
+	getVoiceConnection,
+	createAudioResource,
+	createAudioPlayer,
+	entersState,
 } = require("@discordjs/voice");
 const {
-    Client,
-    CommandInteraction,
-    MessageActionRow,
-    MessageButton,
-    VoiceChannel,
-    MessageEmbed,
+	Client,
+	CommandInteraction,
+	MessageActionRow,
+	MessageButton,
+	VoiceChannel,
+	MessageEmbed,
 } = require("discord.js");
 const Command = require("../classes/Command");
 const Logger = require("../classes/Logger");
@@ -21,418 +21,420 @@ const endpoints = require("../endpoints.json");
 const wait = require("util").promisify(setTimeout);
 
 class PlayCommand extends Command {
-    /**
-     * The basis for a command.
-     * @param {SlashCommandBuilder} data The command data.
-     * @param {boolean} testing If the command should be public or not.
-     */
-    constructor() {
-        super(
-            new SlashCommandBuilder()
-                .setName("play")
-                .setDescription("Listen to Newgrounds Radio!")
-                .addStringOption((option) => {
-                    return option
-                        .setName("station")
-                        .setDescription(
-                            "Which station do you want to listen to?"
-                        )
-                        .setRequired(true)
-                        .addChoices([
-                            ["Easy Listening", "/easylistening"],
-                            ["Electronic", "/electronic"],
-                            ["Heavy Metal", "/heavymetal"],
-                            ["Hip-Hop", "/hiphop"],
-                            ["Newgrounds Mix", "/ngmix"],
-                            ["Podcasts", "/podcasts"],
-                            ["Rock", "/rock"],
-                        ]);
-                }),
-            false
-        );
-    }
+	/**
+	 * The basis for a command.
+	 * @param {SlashCommandBuilder} data The command data.
+	 * @param {boolean} testing If the command should be public or not.
+	 */
+	constructor() {
+		super(
+			new SlashCommandBuilder()
+				.setName("play")
+				.setDescription("Listen to Newgrounds Radio!")
+				.addStringOption((option) => {
+					return option
+						.setName("station")
+						.setDescription(
+							"Which station do you want to listen to?"
+						)
+						.setRequired(true)
+						.addChoices([
+							["Easy Listening", "/easylistening"],
+							["Electronic", "/electronic"],
+							["Heavy Metal", "/heavymetal"],
+							["Hip-Hop", "/hiphop"],
+							["Newgrounds Mix", "/ngmix"],
+							["Podcasts", "/podcasts"],
+							["Rock", "/rock"],
+						]);
+				}),
+			false
+		);
+	}
 
-    /**
-     * Joins the voice channel and plays the mount.
-     * @param {Client} client The bot client.
-     * @param {CommandInteraction} interaction The command interaction.
-     * @param {VoiceChannel} channel The voice channel to join.
-     * @param {string} mount The NGR mount to play. This is usually provided by {@link CommandInteraction.options}.
-     */
-    async playMount(client, interaction, channel, mount) {
-        // get data from server
-        const { server_name, server_description, current_song } =
-            await new NewgroundsRadioStatus(endpoints.status).getMountStatus(
-                mount
-            );
+	/**
+	 * Joins the voice channel and plays the mount.
+	 * @param {Client} client The bot client.
+	 * @param {CommandInteraction} interaction The command interaction.
+	 * @param {VoiceChannel} channel The voice channel to join.
+	 * @param {string} mount The NGR mount to play. This is usually provided by {@link CommandInteraction.options}.
+	 */
+	async playMount(client, interaction, channel, mount) {
+		// get data from server
+		const { server_name, server_description, current_song } =
+			await new NewgroundsRadioStatus(endpoints.status).getMountStatus(
+				mount
+			);
 
-        const embed = new MessageEmbed()
-            .setTitle(server_name)
-            .setDescription(server_description)
-            .addField("Now Playing", current_song)
-            .setColor("#eeb211");
+		const embed = new MessageEmbed()
+			.setTitle(server_name)
+			.setDescription(server_description)
+			.addField("Now Playing", current_song)
+			.setColor("#eeb211");
 
-        const invalidPerms = new MessageEmbed()
-            .setTitle("Cannot join channel")
-            .setDescription(
-                `I don't have permission to \`Connect\`, \`Use Voice Activity\`, and/or \`Speak\` in your channel (<#${
-                    channel.id
-                }>). ${
-                    channel
-                        .permissionsFor(interaction.member)
-                        .has("MANAGE_CHANNELS")
-                        ? "Try"
-                        : "ask a server administrator to try "
-                } modifying my permissions for <#${
-                    channel.id
-                }>, or try a different channel.`
-            )
-            .setColor("#eeb211");
+		const invalidPerms = new MessageEmbed()
+			.setTitle("Cannot join channel")
+			.setDescription(
+				`I don't have permission to \`Connect\`, \`Use Voice Activity\`, and/or \`Speak\` in your channel (<#${
+					channel.id
+				}>). ${
+					channel
+						.permissionsFor(interaction.member)
+						.has("MANAGE_CHANNELS")
+						? "Try"
+						: "ask a server administrator to try "
+				} modifying my permissions for <#${
+					channel.id
+				}>, or try a different channel.`
+			)
+			.setColor("#eeb211");
 
-        // if i don't have permissions i need in the channel
-        if (
-            !channel.permissionsFor(client.user).has("CONNECT") ||
-            !channel.permissionsFor(client.user).has("USE_VAD") ||
-            !channel.permissionsFor(client.user).has("SPEAK")
-        ) {
-            if (interaction.replied) {
-                interaction.editReply({
-                    content: " ",
-                    components: [],
-                    embeds: [invalidPerms],
-                });
-            } else {
-                interaction.reply({
-                    content: " ",
-                    components: [],
-                    embeds: [invalidPerms],
-                });
-            }
+		// if i don't have permissions i need in the channel
+		if (
+			!channel.permissionsFor(client.user).has("CONNECT") ||
+			!channel.permissionsFor(client.user).has("USE_VAD") ||
+			!channel.permissionsFor(client.user).has("SPEAK")
+		) {
+			if (interaction.replied) {
+				interaction.editReply({
+					content: " ",
+					components: [],
+					embeds: [invalidPerms],
+				});
+			} else {
+				interaction.editReply({
+					content: " ",
+					components: [],
+					embeds: [invalidPerms],
+				});
+			}
 
-            return;
-        }
+			return;
+		}
 
-        // join the channel, create the audio resource and player
-        const connection = joinVoiceChannel({
-            channelId: channel.id,
-            guildId: channel.guild.id,
-            adapterCreator: channel.guild.voiceAdapterCreator,
-        });
+		// join the channel, create the audio resource and player
+		const connection = joinVoiceChannel({
+			channelId: channel.id,
+			guildId: channel.guild.id,
+			adapterCreator: channel.guild.voiceAdapterCreator,
+		});
 
-        const resource = createAudioResource(`${endpoints.audio}${mount}`, {});
+		const resource = createAudioResource(`${endpoints.audio}${mount}`, {});
 
-        const audioPlayer = createAudioPlayer();
+		const audioPlayer = createAudioPlayer();
 
-        connection.subscribe(audioPlayer);
+		connection.subscribe(audioPlayer);
 
-        audioPlayer.play(resource);
+		audioPlayer.play(resource);
 
-        if (interaction.replied) {
-            interaction.editReply({
-                content: " ",
-                components: [],
-                embeds: [embed],
-            });
-        } else {
-            interaction.reply({
-                content: " ",
-                components: [],
-                embeds: [embed],
-            });
-        }
-    }
+		if (interaction.replied) {
+			interaction.editReply({
+				content: " ",
+				components: [],
+				embeds: [embed],
+			});
+		} else {
+			interaction.editReply({
+				content: " ",
+				components: [],
+				embeds: [embed],
+			});
+		}
+	}
 
-    /**
-     * Executes the command.
-     * @param {Client} client The bot client.
-     * @param {CommandInteraction} interaction The command interaction.
-     * @param {Logger} logger The logger instance.
-     */
-    async execute(client, interaction, logger) {
-        const mount = interaction.options.getString("station");
+	/**
+	 * Executes the command.
+	 * @param {Client} client The bot client.
+	 * @param {CommandInteraction} interaction The command interaction.
+	 * @param {Logger} logger The logger instance.
+	 */
+	async execute(client, interaction, logger) {
+		await interaction.deferReply();
 
-        if (!interaction.member.voice.channel)
-            return interaction.reply({
-                content:
-                    "You need to be in a voice channel to use this command.",
-                ephemeral: true,
-            });
+		const mount = interaction.options.getString("station");
 
-        const currentBotVoiceConnection =
-            interaction.guild.voiceStates.cache.get(client.user.id);
+		if (!interaction.member.voice.channel)
+			return interaction.editReply({
+				content:
+					"You need to be in a voice channel to use this command.",
+				ephemeral: true,
+			});
 
-        if (
-            !currentBotVoiceConnection ||
-            currentBotVoiceConnection.channelId === null
-        ) {
-            // bot is not in any channel in server
-            this.playMount(
-                client,
-                interaction,
-                interaction.member.voice.channel,
-                mount
-            );
-        } else if (
-            currentBotVoiceConnection.channelId !==
-            interaction.member.voice.channel.id
-        ) {
-            // bot is already in a channel, and user is in different channel
-            let msg = {
-                content: `I'm already in <#${
-                    currentBotVoiceConnection.channelId
-                }>!\n${
-                    interaction.member.permissions.has("MOVE_MEMBERS")
-                        ? "Because you have the `MOVE_MEMBERS` permission, you can move me to your channel. Would you like to do that?"
-                        : "You cannot move me because you do not have the `MOVE_MEMBERS` permission."
-                }`,
-                fetchReply: true,
-            };
+		const currentBotVoiceConnection =
+			interaction.guild.voiceStates.cache.get(client.user.id);
 
-            let confirmMoveComponent = new MessageActionRow();
+		if (
+			!currentBotVoiceConnection ||
+			currentBotVoiceConnection.channelId === null
+		) {
+			// bot is not in any channel in server
+			this.playMount(
+				client,
+				interaction,
+				interaction.member.voice.channel,
+				mount
+			);
+		} else if (
+			currentBotVoiceConnection.channelId !==
+			interaction.member.voice.channel.id
+		) {
+			// bot is already in a channel, and user is in different channel
+			let msg = {
+				content: `I'm already in <#${
+					currentBotVoiceConnection.channelId
+				}>!\n${
+					interaction.member.permissions.has("MOVE_MEMBERS")
+						? "Because you have the `MOVE_MEMBERS` permission, you can move me to your channel. Would you like to do that?"
+						: "You cannot move me because you do not have the `MOVE_MEMBERS` permission."
+				}`,
+				fetchReply: true,
+			};
 
-            // if the user can move members, give them the option to move the bot to their channel
-            if (interaction.member.permissions.has("MOVE_MEMBERS")) {
-                confirmMoveComponent.addComponents(
-                    new MessageButton()
-                        .setLabel("Yes")
-                        .setStyle("SECONDARY")
-                        .setCustomId(`${interaction.id}-moveConfirmationYes`),
-                    new MessageButton()
-                        .setLabel("No")
-                        .setStyle("SECONDARY")
-                        .setCustomId(`${interaction.id}-moveConfirmationNo`)
-                );
+			let confirmMoveComponent = new MessageActionRow();
 
-                msg.components = [confirmMoveComponent];
-            }
+			// if the user can move members, give them the option to move the bot to their channel
+			if (interaction.member.permissions.has("MOVE_MEMBERS")) {
+				confirmMoveComponent.addComponents(
+					new MessageButton()
+						.setLabel("Yes")
+						.setStyle("SECONDARY")
+						.setCustomId(`${interaction.id}-moveConfirmationYes`),
+					new MessageButton()
+						.setLabel("No")
+						.setStyle("SECONDARY")
+						.setCustomId(`${interaction.id}-moveConfirmationNo`)
+				);
 
-            const m = await interaction.reply(msg);
+				msg.components = [confirmMoveComponent];
+			}
 
-            if (interaction.member.permissions.has("MOVE_MEMBERS")) {
-                const filter = (i) => {
-                    i.deferUpdate();
-                    return i.user.id === interaction.user.id;
-                };
+			const m = await interaction.editReply(msg);
 
-                m.awaitMessageComponent({
-                    filter,
-                    componentType: "BUTTON",
-                    time: 5000,
-                })
-                    .then((i) => {
-                        if (
-                            i.customId ===
-                            `${interaction.id}-moveConfirmationYes`
-                        ) {
-                            this.playMount(
-                                client,
-                                interaction,
-                                interaction.member.voice.channel,
-                                mount
-                            );
-                        }
+			if (interaction.member.permissions.has("MOVE_MEMBERS")) {
+				const filter = (i) => {
+					i.deferUpdate();
+					return i.user.id === interaction.user.id;
+				};
 
-                        interaction.editReply({
-                            components: [
-                                new MessageActionRow().addComponents(
-                                    new MessageButton()
-                                        .setLabel("Yes")
-                                        .setStyle("SECONDARY")
-                                        .setCustomId(
-                                            `${interaction.id}-moveConfirmationYesDisabled`
-                                        )
-                                        .setDisabled(true),
-                                    new MessageButton()
-                                        .setLabel("No")
-                                        .setStyle("SECONDARY")
-                                        .setCustomId(
-                                            `${interaction.id}-moveConfirmationNoDisabled`
-                                        )
-                                        .setDisabled(true)
-                                ),
-                            ],
-                        });
-                    })
-                    .catch((err) => {
-                        interaction.editReply({
-                            components: [
-                                new MessageActionRow().addComponents(
-                                    new MessageButton()
-                                        .setLabel("Yes")
-                                        .setStyle("SECONDARY")
-                                        .setCustomId(
-                                            `${interaction.id}-moveConfirmationYesDisabled`
-                                        )
-                                        .setDisabled(true),
-                                    new MessageButton()
-                                        .setLabel("No")
-                                        .setStyle("SECONDARY")
-                                        .setCustomId(
-                                            `${interaction.id}-moveConfirmationNoDisabled`
-                                        )
-                                        .setDisabled(true)
-                                ),
-                            ],
-                        });
-                    });
-            }
-        } else if (
-            currentBotVoiceConnection.channelId ===
-            interaction.member.voice.channel.id
-        ) {
-            // bot and user are in the same channel
-            const connection = getVoiceConnection(interaction.guild.id);
+				m.awaitMessageComponent({
+					filter,
+					componentType: "BUTTON",
+					time: 5000,
+				})
+					.then((i) => {
+						if (
+							i.customId ===
+							`${interaction.id}-moveConfirmationYes`
+						) {
+							this.playMount(
+								client,
+								interaction,
+								interaction.member.voice.channel,
+								mount
+							);
+						}
 
-            // bot is not playing anything
-            if (!connection)
-                return this.playMount(
-                    client,
-                    interaction,
-                    interaction.member.voice.channel,
-                    mount
-                );
+						interaction.editReply({
+							components: [
+								new MessageActionRow().addComponents(
+									new MessageButton()
+										.setLabel("Yes")
+										.setStyle("SECONDARY")
+										.setCustomId(
+											`${interaction.id}-moveConfirmationYesDisabled`
+										)
+										.setDisabled(true),
+									new MessageButton()
+										.setLabel("No")
+										.setStyle("SECONDARY")
+										.setCustomId(
+											`${interaction.id}-moveConfirmationNoDisabled`
+										)
+										.setDisabled(true)
+								),
+							],
+						});
+					})
+					.catch((err) => {
+						interaction.editReply({
+							components: [
+								new MessageActionRow().addComponents(
+									new MessageButton()
+										.setLabel("Yes")
+										.setStyle("SECONDARY")
+										.setCustomId(
+											`${interaction.id}-moveConfirmationYesDisabled`
+										)
+										.setDisabled(true),
+									new MessageButton()
+										.setLabel("No")
+										.setStyle("SECONDARY")
+										.setCustomId(
+											`${interaction.id}-moveConfirmationNoDisabled`
+										)
+										.setDisabled(true)
+								),
+							],
+						});
+					});
+			}
+		} else if (
+			currentBotVoiceConnection.channelId ===
+			interaction.member.voice.channel.id
+		) {
+			// bot and user are in the same channel
+			const connection = getVoiceConnection(interaction.guild.id);
 
-            // only 1 other person in channel
-            if (currentBotVoiceConnection.channel.members.size === 2)
-                return this.playMount(
-                    client,
-                    interaction,
-                    interaction.member.voice.channel,
-                    mount
-                );
+			// bot is not playing anything
+			if (!connection)
+				return this.playMount(
+					client,
+					interaction,
+					interaction.member.voice.channel,
+					mount
+				);
 
-            // if both tests failed then we need to vote
+			// only 1 other person in channel
+			if (currentBotVoiceConnection.channel.members.size === 2)
+				return this.playMount(
+					client,
+					interaction,
+					interaction.member.voice.channel,
+					mount
+				);
 
-            // get data from endpoint
-            const mountData = await new NewgroundsRadioStatus(
-                endpoints.status
-            ).getMountStatus(mount);
+			// if both tests failed then we need to vote
 
-            // format the mount name
-            let formattedMountName = mountData.server_name.replace(
-                " Radio",
-                ""
-            );
+			// get data from endpoint
+			const mountData = await new NewgroundsRadioStatus(
+				endpoints.status
+			).getMountStatus(mount);
 
-            if (formattedMountName !== "Newgrounds Mix")
-                formattedMountName = formattedMountName.replace(
-                    "Newgrounds ",
-                    ""
-                );
+			// format the mount name
+			let formattedMountName = mountData.server_name.replace(
+				" Radio",
+				""
+			);
 
-            let approvedCount = [];
-            let neededCount = Math.round(
-                (currentBotVoiceConnection.channel.members.size - 1) / 2
-            );
+			if (formattedMountName !== "Newgrounds Mix")
+				formattedMountName = formattedMountName.replace(
+					"Newgrounds ",
+					""
+				);
 
-            let embed = new MessageEmbed()
-                .setTitle(
-                    `${
-                        interaction.member.nickname
-                            ? interaction.member.nickname
-                            : interaction.member.user.username
-                    } wants to switch stations`
-                )
-                .setDescription(
-                    `${
-                        interaction.member.nickname
-                            ? interaction.member.nickname
-                            : interaction.member.user.username
-                    } would like to switch to the ${formattedMountName} station.\nPress the button below to accept this switch.`
-                )
-                .setColor("#eeb211");
+			let approvedCount = [];
+			let neededCount = Math.round(
+				(currentBotVoiceConnection.channel.members.size - 1) / 2
+			);
 
-            let button = new MessageButton()
-                .setLabel(
-                    `Yes, switch stations (${approvedCount.length}/${neededCount})`
-                )
-                .setStyle("SUCCESS")
-                .setCustomId(`${interaction.id}-approveStationSwitch`)
-                .setEmoji("✅")
-                .setDisabled(false);
-            let actionRow = new MessageActionRow().setComponents(button);
+			let embed = new MessageEmbed()
+				.setTitle(
+					`${
+						interaction.member.nickname
+							? interaction.member.nickname
+							: interaction.member.user.username
+					} wants to switch stations`
+				)
+				.setDescription(
+					`${
+						interaction.member.nickname
+							? interaction.member.nickname
+							: interaction.member.user.username
+					} would like to switch to the ${formattedMountName} station.\nPress the button below to accept this switch.`
+				)
+				.setColor("#eeb211");
 
-            const m = await interaction.reply({
-                embeds: [embed],
-                components: [actionRow],
-                fetchReply: true,
-            });
+			let button = new MessageButton()
+				.setLabel(
+					`Yes, switch stations (${approvedCount.length}/${neededCount})`
+				)
+				.setStyle("SUCCESS")
+				.setCustomId(`${interaction.id}-approveStationSwitch`)
+				.setEmoji("✅")
+				.setDisabled(false);
+			let actionRow = new MessageActionRow().setComponents(button);
 
-            // create a collector for voting
-            const collector = m.createMessageComponentCollector({
-                componentType: "BUTTON",
-                time: 20000,
-            });
+			const m = await interaction.editReply({
+				embeds: [embed],
+				components: [actionRow],
+				fetchReply: true,
+			});
 
-            collector.on("collect", async (i) => {
-                // if the user hasn't voted yet, add them to the vote count
-                if (i.user.id === interaction.user.id)
-                    return i.reply({
-                        content: "You can't approve your own request!",
-                        ephemeral: true,
-                    });
+			// create a collector for voting
+			const collector = m.createMessageComponentCollector({
+				componentType: "BUTTON",
+				time: 20000,
+			});
 
-                if (approvedCount.includes(i.user.id))
-                    return i.reply({
-                        content: "You've already approved this request.",
-                        ephemeral: true,
-                    });
+			collector.on("collect", async (i) => {
+				// if the user hasn't voted yet, add them to the vote count
+				if (i.user.id === interaction.user.id)
+					return i.reply({
+						content: "You can't approve your own request!",
+						ephemeral: true,
+					});
 
-                i.deferUpdate();
+				if (approvedCount.includes(i.user.id))
+					return i.reply({
+						content: "You've already approved this request.",
+						ephemeral: true,
+					});
 
-                approvedCount.push(i.user.id);
+				i.deferUpdate();
 
-                button = new MessageButton()
-                    .setLabel(
-                        `Yes, switch stations (${approvedCount.length}/${neededCount})`
-                    )
-                    .setStyle("SUCCESS")
-                    .setCustomId(`${interaction.id}-approveStationSwitch`)
-                    .setEmoji("✅")
-                    .setDisabled(false);
-                actionRow = new MessageActionRow().setComponents(button);
+				approvedCount.push(i.user.id);
 
-                // if the vote passed play the mount
-                if (approvedCount.length >= neededCount) {
-                    button.setDisabled(true);
+				button = new MessageButton()
+					.setLabel(
+						`Yes, switch stations (${approvedCount.length}/${neededCount})`
+					)
+					.setStyle("SUCCESS")
+					.setCustomId(`${interaction.id}-approveStationSwitch`)
+					.setEmoji("✅")
+					.setDisabled(false);
+				actionRow = new MessageActionRow().setComponents(button);
 
-                    this.playMount(
-                        client,
-                        interaction,
-                        interaction.member.voice.channel,
-                        mount
-                    );
+				// if the vote passed play the mount
+				if (approvedCount.length >= neededCount) {
+					button.setDisabled(true);
 
-                    collector.stop();
-                } else {
-                    interaction.editReply({ components: [actionRow] });
-                }
-            });
+					this.playMount(
+						client,
+						interaction,
+						interaction.member.voice.channel,
+						mount
+					);
 
-            collector.on("end", (collected) => {
-                // if there isn't enough votes, change the message
-                if (approvedCount.length < neededCount) {
-                    button.setDisabled(true);
+					collector.stop();
+				} else {
+					interaction.editReply({ components: [actionRow] });
+				}
+			});
 
-                    embed.setDescription(
-                        `${
-                            interaction.member.nickname
-                                ? interaction.member.nickname
-                                : interaction.member.user.username
-                        }'s request to switch to the ${formattedMountName} station did not get enough votes.`
-                    );
+			collector.on("end", (collected) => {
+				// if there isn't enough votes, change the message
+				if (approvedCount.length < neededCount) {
+					button.setDisabled(true);
 
-                    interaction.editReply({
-                        components: [actionRow],
-                        embeds: [embed],
-                    });
-                }
-            });
-        } else {
-            // something went wrong
-            console.assert();
-        }
-    }
+					embed.setDescription(
+						`${
+							interaction.member.nickname
+								? interaction.member.nickname
+								: interaction.member.user.username
+						}'s request to switch to the ${formattedMountName} station did not get enough votes.`
+					);
+
+					interaction.editReply({
+						components: [actionRow],
+						embeds: [embed],
+					});
+				}
+			});
+		} else {
+			// something went wrong
+			console.assert();
+		}
+	}
 }
 
 module.exports = PlayCommand;
