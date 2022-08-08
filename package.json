@@ -1,6 +1,6 @@
 {
 	"name": "newgrounds-radio-bot",
-	"version": "2.1.0",
+	"version": "2.1.1",
 	"description": "Listen to Newgrounds Radio via Discord.",
 	"main": "index.js",
 	"repository": {

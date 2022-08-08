@@ -72,6 +72,7 @@ const rest = new REST({ version: "9" }).setToken(
 			? process.env.DISCORD_TOKEN
 			: process.env.DISCORD_DEV_TOKEN,
 		respawn: true,
+		shardArgs: [process.argv[2]],
 	});
 
 	manager.on("shardCreate", (shard) =>
